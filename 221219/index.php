@@ -136,7 +136,7 @@ $mysqli->close();
                                                         <button type="button" class="btn btn-warning">Todo!</button>
                                                     </a>
                                                 <?php } else { ?>
-                                                    <span><?= "Gedaan op "  . date('j M Y H\ui\ms\s', strtotime($todo["created_at"])) ?></span>
+                                                    <span><?= print get_time_ago(strtotime($todo["created_at"])) ?></span>
                                                 <?php } ?>
                                             </td>
                                         </tr>
