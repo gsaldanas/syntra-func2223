@@ -1,4 +1,5 @@
 <?php
+date_default_timezone_set('Europe/Brussels');
 $db_host = '127.0.0.1';
 $db_user = 'root';
 $db_password = 'root';
@@ -80,11 +81,22 @@ $mysqli->close();
 
                             <table class="table text-white mb-0">
                                 <thead>
-                                    <tr>
-                                        <th scope="col">Taak</th>
-                                        <th scope="col">Datum</th>
-                                        <th scope="col"></th>
-                                    </tr>
+                                    <?php
+                                    $counter = 1;
+                                    foreach ($todos as $key => $todo) {
+                                    ?>
+                                        <tr>
+
+                                            <td><?= $todo["task"] ?></td>
+                                            <td><?= date("d M, h:i", strtotime($todo["created_at"])) ?></td>
+                                            <!-- <td><?= $todo["created_at"] ?></td> -->
+
+                                        </tr>
+
+                                    <?php
+                                        $counter++;
+                                    }
+                                    ?>
                                 </thead>
                                 <tbody>
 
