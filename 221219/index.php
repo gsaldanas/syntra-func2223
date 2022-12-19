@@ -14,22 +14,53 @@ $mysqli = new mysqli(
     $db_port
 );
 
+function get_time_ago($time)
+{
+    $time_difference = time() - $time;
+
+    if ($time_difference < 1) {
+        return 'less than 1 second ago';
+    }
+    $condition = array(
+        12 * 30 * 24 * 60 * 60 =>  'year',
+        30 * 24 * 60 * 60       =>  'month',
+        24 * 60 * 60            =>  'day',
+        60 * 60                 =>  'hour',
+        60                      =>  'minute',
+        1                       =>  'second'
+    );
+
+    foreach ($condition as $secs => $str) {
+        $d = $time_difference / $secs;
+
+        if ($d >= 1) {
+            $t = round($d);
+            return 'about ' . $t . ' ' . $str . ($t > 1 ? 's' : '') . ' ago';
+        }
+    }
+}
+
 if ($mysqli->connect_error) {
     echo 'Errno: ' . $mysqli->connect_errno;
     echo '<br>';
     echo 'Error: ' . $mysqli->connect_error;
     exit();
 }
-$sql = "SELECT id, task, created_at  FROM todos";
+//Moet een taak germarkeerd worden?
+if (isset($_GET["completed"])) {
+    $sql = "UPDATE todos SET completed_at = NOW() WHERE id = " . $_GET["completed"];
+    $mysqli->query($sql);
+}
+//moet een taak toegevoegd worden?
+if (isset($_POST["newtask"])) {
+    $sql = "INSERT INTO todos(task) Values( '" . $_POST["newtask"] . "')";
+    $mysqli->query($sql);
+}
+
+$sql = "SELECT id, task, created_at, completed_at  FROM todos";
 $result = $mysqli->query($sql);
 
-$todos = [];
-if ($result && $result->num_rows > 0) {
-    // output data of each row
-    while ($row = $result->fetch_assoc()) {
-        $todos[] = $row;
-    }
-}
+$todos = $result->fetch_all(MYSQLI_ASSOC);
 
 $mysqli->close();
 ?>
@@ -81,36 +112,40 @@ $mysqli->close();
 
                             <table class="table text-white mb-0">
                                 <thead>
-                                    <?php
-                                    $counter = 1;
-                                    foreach ($todos as $key => $todo) {
-                                    ?>
-                                        <tr>
-
-                                            <td><?= $todo["task"] ?></td>
-                                            <td><?= date("d M, h:i", strtotime($todo["created_at"])) ?></td>
-                                            <!-- <td><?= $todo["created_at"] ?></td> -->
-
-                                        </tr>
-
-                                    <?php
-                                        $counter++;
-                                    }
-                                    ?>
+                                    <tr>
+                                        <th scope="col">Taak</th>
+                                        <th scope="col">Datum</th>
+                                        <th scope="col"></th>
+                                    </tr>
                                 </thead>
                                 <tbody>
 
-                                    <tr class="fw-normal">
-                                        <td class="align-middle">
-                                            <span>naam van de taak</span>
-                                        </td>
-                                        <td class="align-middle">
-                                            <span>19 Dec, 10u00</span>
-                                        </td>
-                                        <td class="align-middle">
-                                            <button type="button" class="btn btn-warning">Mark as done</button>
-                                        </td>
-                                    </tr>
+                                    <?php
+                                    foreach ($todos as $todo) {
+                                    ?>
+                                        <tr class="fw-normal">
+                                            <td class="align-middle">
+                                                <span><?= $todo["task"] ?></span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <span><?= date("j M Y - H\ui", strtotime($todo["created_at"])) ?></span>
+                                            </td>
+                                            <td class="align-middle">
+                                                <?php if ($todo["completed_at"] == NULL) { ?>
+                                                    <a href="index.php?completed=<?= $todo["id"] ?>">
+                                                        <button type="button" class="btn btn-warning">Todo!</button>
+                                                    </a>
+                                                <?php } else { ?>
+                                                    <span><?= "Gedaan op "  . date('j M Y H\ui\ms\s', strtotime($todo["created_at"])) ?></span>
+                                                <?php } ?>
+                                            </td>
+                                        </tr>
+
+                                    <?php
+
+                                    }
+                                    ?>
+
 
                                 </tbody>
                             </table>
@@ -125,7 +160,7 @@ $mysqli->close();
                             <div class="text-center pt-3 pb-2">
                                 <form method="post" action="index.php">
                                     <div class="mb-3">
-                                        <input type="text" class="form-control" id="newtask" name="newtask" value="" placeholder="Add new task">
+                                        <input type="text" class="form-control" id="newtask" name="newtask" value="" placeholder="Voeg nieuwe taak toe">
                                     </div>
                                 </form>
                             </div>
